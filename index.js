@@ -23,6 +23,27 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    const db = client.db("tiqnora")
+    const organizationCollection = db.collection("organization")
+    const eventsCollection = db.collection("events")
+    const bookingsCollection = db.collection("bookings")
+    const paymentsCollection = db.collection("payments")
+
+
+
+// organization
+    app.post("/api/organizations", async(req,res)=>{
+        const organization = req.body 
+        const newOrganization = {
+            ...organization,
+            createdAt : new Date(),
+            
+        }
+      const result = await organizationCollection.insertOne(organization);
+      res.send(result);
+    })
+
+
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     // Send a ping to confirm a successful connection

@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
@@ -138,7 +138,84 @@ app.get("/api/organizations", async (req, res) => {
 });
 
 
+// Update Organization Own
+app.patch("/api/organizations/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const updateData = req.body;
 
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid organization id.",
+      });
+    }
+
+    const {
+      organizationName,
+      logo,
+      website,
+      description,
+      organizerEmail,
+      organizerName,
+      status,
+    } = updateData;
+
+    if (!organizerEmail) {
+      return res.status(400).send({
+        success: false,
+        message: "Organizer email is required.",
+      });
+    }
+
+    if (!organizationName || !logo || !description) {
+      return res.status(400).send({
+        success: false,
+        message: "Required organization fields are missing.",
+      });
+    }
+
+    const filter = {
+      _id: new ObjectId(id),
+      organizerEmail,
+    };
+
+    const updateDoc = {
+      $set: {
+        organizationName,
+        logo,
+        website: website || "",
+        description,
+        organizerName: organizerName || "Organizer",
+        status: status || "active",
+        updatedAt: new Date(),
+      },
+    };
+
+    const result = await organizationCollection.updateOne(filter, updateDoc);
+
+    if (result.matchedCount === 0) {
+      return res.status(404).send({
+        success: false,
+        message: "Organization not found or you do not have permission.",
+      });
+    }
+
+    const updatedOrganization = await organizationCollection.findOne(filter);
+
+    res.send({
+      success: true,
+      message: "Organization updated successfully.",
+      data: updatedOrganization,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Failed to update organization.",
+      error: error.message,
+    });
+  }
+});
 
 
 

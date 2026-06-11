@@ -267,7 +267,7 @@ app.delete("/api/organizations/:id", async (req, res) => {
 
 // Events 
 
-
+// post events
 app.post("/api/events", async (req, res) => {
   try {
     const {
@@ -340,9 +340,37 @@ app.post("/api/events", async (req, res) => {
   }
 });
 
+// get OWN Events
 
+app.get("/api/events", async (req, res) => {
+  try {
+    const organizerEmail = req.query.email;
 
+    if (!organizerEmail) {
+      return res.status(400).send({
+        success: false,
+        message: "Organizer email is required.",
+      });
+    }
 
+    const events = await eventsCollection
+      .find({ organizerEmail })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.send({
+      success: true,
+      message: "Events fetched successfully.",
+      data: events,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Failed to fetch events.",
+      error: error.message,
+    });
+  }
+});
 
 
 

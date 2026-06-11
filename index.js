@@ -372,6 +372,111 @@ app.get("/api/events", async (req, res) => {
   }
 });
 
+// Update  event
+app.patch("/api/events/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const updateData = req.body;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid event id.",
+      });
+    }
+
+    const {
+      title,
+      banner,
+      category,
+      location,
+      date,
+      ticketPrice,
+      availableSeats,
+      description,
+      status,
+      organizerEmail,
+      organizerName,
+    } = updateData;
+
+    if (!organizerEmail) {
+      return res.status(400).send({
+        success: false,
+        message: "Organizer email is required.",
+      });
+    }
+
+    const filter = {
+      _id: new ObjectId(id),
+      organizerEmail,
+    };
+
+    const updateDoc = {
+      $set: {
+        title,
+        banner,
+        category,
+        location,
+        date,
+        ticketPrice: Number(ticketPrice),
+        availableSeats: Number(availableSeats),
+        description,
+        status: status || "approved",
+        organizerName: organizerName || "Organizer",
+        updatedAt: new Date(),
+      },
+    };
+
+    const result = await eventsCollection.updateOne(filter, updateDoc);
+
+    if (result.matchedCount === 0) {
+      return res.status(404).send({
+        success: false,
+        message: "Event not found or you do not have permission.",
+      });
+    }
+
+    const updatedEvent = await eventsCollection.findOne(filter);
+
+    res.send({
+      success: true,
+      message: "Event updated successfully.",
+      data: updatedEvent,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Failed to update event.",
+      error: error.message,
+    });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

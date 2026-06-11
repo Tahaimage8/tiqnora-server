@@ -265,8 +265,80 @@ app.delete("/api/organizations/:id", async (req, res) => {
   }
 });
 
+// Events 
 
 
+app.post("/api/events", async (req, res) => {
+  try {
+    const {
+      title,
+      banner,
+      category,
+      location,
+      date,
+      ticketPrice,
+      availableSeats,
+      description,
+      status,
+      organizerEmail,
+      organizerName,
+    } = req.body;
+
+    const requiredFields = [
+      title,
+      banner,
+      category,
+      location,
+      date,
+      description,
+      organizerEmail,
+    ];
+
+    if (
+      requiredFields.some((field) => !field) ||
+      ticketPrice === undefined ||
+      availableSeats === undefined
+    ) {
+      return res.status(400).send({
+        success: false,
+        message: "Required event fields are missing.",
+      });
+    }
+
+    const newEvent = {
+      title,
+      banner,
+      category,
+      location,
+      date,
+      ticketPrice: Number(ticketPrice),
+      availableSeats: Number(availableSeats),
+      description,
+      status: status || "approved",
+      organizerEmail,
+      organizerName: organizerName || "Organizer",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const result = await eventsCollection.insertOne(newEvent);
+
+    res.status(201).send({
+      success: true,
+      message: "Event created successfully.",
+      data: {
+        _id: result.insertedId,
+        ...newEvent,
+      },
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Failed to create event.",
+      error: error.message,
+    });
+  }
+});
 
 
 

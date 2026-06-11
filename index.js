@@ -219,7 +219,51 @@ app.patch("/api/organizations/:id", async (req, res) => {
 
 
 
+// Delete Organization
+app.delete("/api/organizations/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { organizerEmail } = req.body;
 
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid organization id.",
+      });
+    }
+
+    if (!organizerEmail) {
+      return res.status(400).send({
+        success: false,
+        message: "Organizer email is required.",
+      });
+    }
+
+    const result = await organizationCollection.deleteOne({
+      _id: new ObjectId(id),
+      organizerEmail,
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).send({
+        success: false,
+        message: "Organization not found or you do not have permission.",
+      });
+    }
+
+    res.send({
+      success: true,
+      message: "Organization deleted successfully.",
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Failed to delete organization.",
+      error: error.message,
+    });
+  }
+});
 
 
 

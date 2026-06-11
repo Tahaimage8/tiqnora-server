@@ -1,67 +1,143 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const express = require('express')
-const dotenv = require("dotenv")
-dotenv.config()
-const cors = require("cors")
-const app = express()
-const port = process.env.port
+const { MongoClient, ServerApiVersion } = require("mongodb");
+const express = require("express");
+const dotenv = require("dotenv");
+const cors = require("cors");
 
-app.use(cors())
+dotenv.config();
+
+const app = express();
+const port = process.env.PORT || 5000;
+
+app.use(
+  cors({
+    origin: ["http://localhost:3000"],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
+const uri = process.env.MONGODB_URI;
 
-const uri= process.env.MONGODB_URI;
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
   try {
-    const db = client.db("tiqnora")
-    const organizationCollection = db.collection("organization")
-    const eventsCollection = db.collection("events")
-    const bookingsCollection = db.collection("bookings")
-    const paymentsCollection = db.collection("payments")
+    await client.connect();
+
+    const db = client.db("tiqnora");
+
+    const organizationCollection = db.collection("organizations");
+    const eventsCollection = db.collection("events");
+    const bookingsCollection = db.collection("bookings");
+    const paymentsCollection = db.collection("payments");
+
+    // Create organization
+
+    
+app.post("/api/organizations", async (req, res) => {
+  try {
+    const organization = req.body;
+
+    const {
+      organizationName,
+      logo,
+      website,
+      description,
+      organizerEmail,
+      organizerName,
+      status,
+    } = organization;
+
+    if (!organizationName || !logo || !description || !organizerEmail) {
+      return res.status(400).send({
+        success: false,
+        message: "Required organization fields are missing.",
+      });
+    }
+
+    const existingOrganization = await organizationCollection.findOne({
+      organizerEmail,
+    });
+
+    if (existingOrganization) {
+      return res.status(409).send({
+        success: false,
+        message: "You already have an organization profile.",
+      });
+    }
+
+    const newOrganization = {
+      organizationName,
+      logo,
+      website: website || "",
+      description,
+      organizerEmail,
+      organizerName: organizerName || "Organizer",
+      status: status || "active",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const result = await organizationCollection.insertOne(newOrganization);
+
+    res.status(201).send({
+      success: true,
+      message: "Organization created successfully.",
+      data: {
+        _id: result.insertedId,
+        ...newOrganization,
+      },
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Failed to create organization.",
+      error: error.message,
+    });
+  }
+});
 
 
 
-// organization
-    app.post("/api/organizations", async(req,res)=>{
-        const organization = req.body 
-        const newOrganization = {
-            ...organization,
-            createdAt : new Date(),
-            
-        }
-      const result = await organizationCollection.insertOne(organization);
-      res.send(result);
-    })
 
 
-    // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
-    // Send a ping to confirm a successful connection
-    // await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    app.get("/", (req, res) => {
+      res.send("Tiqnora server is running.");
+    });
+
+    console.log("MongoDB connected successfully.");
+  } catch (error) {
+    console.error(error);
   }
 }
+
 run().catch(console.dir);
 
-
-
-app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
-
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+  console.log(`Tiqnora server running on port ${port}`);
+});

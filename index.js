@@ -452,7 +452,52 @@ app.patch("/api/events/:id", async (req, res) => {
   }
 });
 
+// Delete Event
 
+app.delete("/api/events/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { organizerEmail } = req.body;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid event id.",
+      });
+    }
+
+    if (!organizerEmail) {
+      return res.status(400).send({
+        success: false,
+        message: "Organizer email is required.",
+      });
+    }
+
+    const result = await eventsCollection.deleteOne({
+      _id: new ObjectId(id),
+      organizerEmail,
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).send({
+        success: false,
+        message: "Event not found or you do not have permission.",
+      });
+    }
+
+    res.send({
+      success: true,
+      message: "Event deleted successfully.",
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Failed to delete event.",
+      error: error.message,
+    });
+  }
+});
 
 
 

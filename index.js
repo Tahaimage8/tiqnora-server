@@ -40,7 +40,7 @@ async function run() {
 
     // Create organization
 
-    
+
 app.post("/api/organizations", async (req, res) => {
   try {
     const organization = req.body;
@@ -104,6 +104,38 @@ app.post("/api/organizations", async (req, res) => {
   }
 });
 
+// only who create the organization he/she get info
+
+app.get("/api/organizations", async (req, res) => {
+  try {
+    const organizerEmail = req.query.email;
+
+    if (!organizerEmail) {
+      return res.status(400).send({
+        success: false,
+        message: "Organizer email is required.",
+      });
+    }
+
+    const organization = await organizationCollection.findOne({
+      organizerEmail,
+    });
+
+    res.send({
+      success: true,
+      message: organization
+        ? "Organization found."
+        : "No organization found.",
+      data: organization,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Failed to fetch organization.",
+      error: error.message,
+    });
+  }
+});
 
 
 
